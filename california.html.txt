@@ -1,0 +1,484 @@
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>California Trip 2026 - ワンペ・スケジュール</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Sans JP -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    /* 印刷時の設定 */
+    @media print {
+      body {
+        background-color: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+      }
+      .print-grid {
+        min-width: 100% !important;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 8mm;
+      }
+      /* 印刷時にスクロールバーが出ないように調整 */
+      .overflow-x-auto {
+        overflow-x: visible !important;
+      }
+    }
+    /* スクロールバーのカスタマイズ */
+    ::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
+
+  <!-- ヘッダー (印刷時は非表示にする要素をコントロール) -->
+  <header class="bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-600 text-white shadow-md no-print">
+    <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <i data-lucide="palmtree" class="h-6 w-6 text-amber-300 animate-bounce"></i>
+          <span class="text-xs font-bold tracking-widest uppercase text-sky-200">California Trip 2026</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">カリフォルニア 1週間スケジュール</h1>
+        <p class="text-sm text-sky-100 mt-1">2026年9月19日(土) 〜 9月26日(土) / ロサンゼルス・アナハイム</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="window.print()" class="bg-white/20 hover:bg-white/30 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 transition duration-150 border border-white/30 text-sm">
+          <i data-lucide="printer" class="h-4 w-4"></i> 印刷する (A4ヨコ)
+        </button>
+        <div class="bg-slate-900/40 p-1 rounded-lg flex border border-white/10">
+          <button id="btn-timeline" onclick="switchView('timeline')" class="px-3 py-1.5 rounded text-xs font-semibold bg-white text-slate-800 shadow-sm transition">
+            タイムライン
+          </button>
+          <button id="btn-list" onclick="switchView('list')" class="px-3 py-1.5 rounded text-xs font-semibold text-white hover:bg-white/10 transition">
+            詳細リスト
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 印刷用ヘッダー（ブラウザ印刷時のみ表示される綺麗なヘッダー） -->
+  <div class="hidden print:block mb-4 border-b pb-3">
+    <div class="flex justify-between items-end">
+      <div>
+        <h1 class="text-2xl font-black text-slate-900">🌴 カリフォルニア旅行スケジュール ワンペ</h1>
+        <p class="text-xs text-slate-500">期間: 2026年9月19日(土) 〜 9月26日(土) | ロサンゼルス・アナハイム</p>
+      </div>
+      <div class="text-right text-xs text-slate-400">
+        作成日: 2026年7月16日
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 mt-6 sm:px-6 lg:px-8 print-container">
+    
+    <!-- メインビュー: タイムライン（ガントチャート） -->
+    <section id="view-timeline" class="block">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+        <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center no-print">
+          <h2 class="font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="calendar-range" class="text-indigo-500"></i>
+            1週間の時間割（朝8:00 〜 夜24:00）
+          </h2>
+          <span class="text-xs text-slate-500">※各ブロックにホバーすると詳細が表示されます。横スクロール可能。</span>
+        </div>
+        
+        <!-- タイムテーブル本体 -->
+        <div class="overflow-x-auto">
+          <div class="min-w-[1000px] p-4 print-grid">
+            
+            <!-- 時間軸ヘッダー (1列目は日付、残り16列は8時〜23時、24時終端) -->
+            <div class="grid grid-cols-[110px_repeat(16,1fr)] border-b border-slate-200 pb-2 text-center text-xs font-bold text-slate-500 select-none">
+              <div class="text-left pl-2">日付</div>
+              <div>08:00</div>
+              <div>09:00</div>
+              <div>10:00</div>
+              <div>11:00</div>
+              <div>12:00</div>
+              <div>13:00</div>
+              <div>14:00</div>
+              <div>15:00</div>
+              <div>16:00</div>
+              <div>17:00</div>
+              <div>18:00</div>
+              <div>19:00</div>
+              <div>20:00</div>
+              <div>21:00</div>
+              <div>22:00</div>
+              <div>23:00</div>
+            </div>
+            
+            <!-- 行データ（JSで動的に挿入） -->
+            <div id="timeline-rows" class="divide-y divide-slate-100 relative">
+              <!-- JSで生成される行がここに入ります -->
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 代替ビュー: リスト（スマホで見やすい形式） -->
+    <section id="view-list" class="hidden no-print">
+      <div class="space-y-4 mb-6" id="list-rows">
+        <!-- JSでリスト項目がここに入ります -->
+      </div>
+    </section>
+
+    <!-- 補足情報・メモセクション (2カラムレイアウト) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- パーク開園時間情報 -->
+      <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2 border-b pb-3 mb-4">
+          <i data-lucide="info" class="text-sky-500"></i>
+          ディズニー & ユニバーサル・スタジオ開園時間 (2026年9月目安)
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- ディズニー側 -->
+          <div class="bg-indigo-50/50 border border-indigo-100 rounded-lg p-4">
+            <h4 class="font-bold text-indigo-900 flex items-center gap-2 mb-2">
+              <i data-lucide="sparkles" class="h-4 w-4 text-indigo-600"></i>
+              ディズニーランド・リゾート
+            </h4>
+            <ul class="text-xs space-y-2 text-slate-700">
+              <li class="flex justify-between py-1 border-b border-indigo-100/50">
+                <span class="font-medium">🏰 ディズニーランド・パーク</span>
+                <span class="font-bold text-indigo-700">8:00 〜 24:00</span>
+              </li>
+              <li class="flex justify-between py-1 border-b border-indigo-100/50">
+                <span class="font-medium">🎡 カリフォルニア・アドベンチャー (DCA)</span>
+                <span class="font-bold text-indigo-700">8:00 〜 22:00</span>
+              </li>
+              <li class="p-2 bg-orange-50 border border-orange-100 rounded text-orange-800 mt-2">
+                <span class="font-bold block">🎃 ウギ・ブギ・バッシュ (Oogie Boogie Bash)</span>
+                イベント時間: <span class="font-bold">18:00 〜 23:00</span><br>
+                ※チケットをお持ちの方は <span class="font-bold underline text-red-600">15:00 から</span> DCAへ先行入場可能です！
+              </li>
+            </ul>
+          </div>
+
+          <!-- ユニバーサル側 -->
+          <div class="bg-sky-50/50 border border-sky-100 rounded-lg p-4 flex flex-col justify-between">
+            <div>
+              <h4 class="font-bold text-sky-900 flex items-center gap-2 mb-2">
+                <i data-lucide="clapperboard" class="h-4 w-4 text-sky-600"></i>
+                ユニバーサル・スタジオ・ハリウッド
+              </h4>
+              <ul class="text-xs space-y-2 text-slate-700">
+                <li class="flex justify-between py-1 border-b border-sky-100/50">
+                  <span class="font-medium">🎬 USH (通常営業時間)</span>
+                  <span class="font-bold text-sky-700">10:00 〜 18:00</span>
+                </li>
+                <li class="p-2 bg-slate-100 border border-slate-200 rounded text-slate-600 mt-2">
+                  <span class="font-bold block text-slate-800">⚠️ ハロウィーン・ホラー・ナイツ</span>
+                  9月の特定日は夜間にホラーイベントが開催されるため、一般営業は18:00に閉園となります。スケジュール通り18:00の閉園後はシティウォークでのディナーがおすすめです。
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 持ち物・出発前チェックリスト (ユーザー自身でチェック可能) -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 no-print">
+        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2 border-b pb-3 mb-4">
+          <i data-lucide="check-square" class="text-emerald-500"></i>
+          旅のチェックリスト
+        </h3>
+        <div class="space-y-2.5 text-sm">
+          <label class="flex items-start gap-2.5 cursor-pointer hover:text-slate-900">
+            <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" checked>
+            <span>パスポート / ESTA申請の完了</span>
+          </label>
+          <label class="flex items-start gap-2.5 cursor-pointer hover:text-slate-900">
+            <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" checked>
+            <span>ディズニー・チケット & パーク予約</span>
+          </label>
+          <label class="flex items-start gap-2.5 cursor-pointer hover:text-slate-900">
+            <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" checked>
+            <span>ウギ・ブギ・バッシュ 特別チケット確認</span>
+          </label>
+          <label class="flex items-start gap-2.5 cursor-pointer hover:text-slate-900">
+            <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+            <span>ユニバーサル・スタジオ・ハリウッド 予約</span>
+          </label>
+          <label class="flex items-start gap-2.5 cursor-pointer hover:text-slate-900">
+            <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+            <span>海外旅行保険への加入・モバイル回線(eSIM)</span>
+          </label>
+          <label class="flex items-start gap-2.5 cursor-pointer hover:text-slate-900">
+            <input type="checkbox" class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+            <span>ディズニー、ユニバーサルの公式アプリ導入</span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 印刷時にのみ表示される印刷フッター -->
+  <div class="hidden print:block text-center text-[10px] text-slate-400 mt-6 border-t pt-2">
+    ※ 2026年 カリフォルニア旅行スケジュール / Oogie Boogie Bash、各パークの開園時間は予告なく変更される場合があります。公式アプリで最新情報をご確認ください。
+  </div>
+
+  <script>
+    // 1週間の予定データ
+    const scheduleData = [
+      {
+        date: '9/19',
+        dayOfWeek: '土',
+        isWeekend: true,
+        tag: '到着日',
+        tagColor: 'bg-indigo-100 text-indigo-800',
+        events: [
+          { start: 8, end: 10, title: '✈️ 飛行機（搭乗・移動）', desc: '10時LAX到着に向けてフライト中', color: 'bg-slate-100 border-slate-300 text-slate-600' },
+          { start: 10, end: 11, title: '🛬 LAX到着', desc: '10:00 ロサンゼルス国際空港到着。入国審査・手荷物受け取り。', color: 'bg-sky-100 border-sky-300 text-sky-800 font-bold' },
+          { start: 11, end: 14, title: '🚌 移動', desc: 'LAXからアナハイムのホテルまで移動（配車アプリやシャトル）', color: 'bg-amber-100 border-amber-300 text-amber-800' },
+          { start: 14, end: 24, title: '🏨 ホテル到着・自由時間', desc: '14:00 チェックイン、周辺散策や買い出し、翌日からの英気を養う', color: 'bg-emerald-100 border-emerald-300 text-emerald-800' }
+        ]
+      },
+      {
+        date: '9/20',
+        dayOfWeek: '日',
+        isWeekend: true,
+        tag: 'ディズニー',
+        tagColor: 'bg-purple-100 text-purple-800',
+        events: [
+          { start: 8, end: 24, title: '🏰 ディズニーランド', desc: 'ディズニーランド・パークを1日中満喫！名物アトラクションやショーを制覇。', color: 'bg-indigo-100 border-indigo-300 text-indigo-800 font-bold' }
+        ]
+      },
+      {
+        date: '9/21',
+        dayOfWeek: '月',
+        isWeekend: false,
+        tag: 'ユニバーサル',
+        tagColor: 'bg-cyan-100 text-cyan-800',
+        events: [
+          { start: 10, end: 18, title: '🎬 ユニバーサル・スタジオ', desc: 'ユニバーサル・スタジオ・ハリウッド (USH) でスタジオツアーや最新エリアを体験！', color: 'bg-sky-100 border-sky-300 text-sky-800 font-bold' },
+          { start: 18, end: 24, title: '🛍️ シティウォーク or ダウンタウンディズニー', desc: '夜はお買い物や美味しいディナーを散策しながら楽しむ', color: 'bg-pink-100 border-pink-300 text-pink-800' }
+        ]
+      },
+      {
+        date: '9/22',
+        dayOfWeek: '火',
+        isWeekend: false,
+        tag: 'DCA / ウギブギ',
+        tagColor: 'bg-orange-100 text-orange-800',
+        events: [
+          { start: 8, end: 15, title: '🎡 DCA (ディズニー・カリフォルニア・アドベンチャー)', desc: 'カーズランドやピクサー・ピアを楽しもう！', color: 'bg-purple-100 border-purple-300 text-purple-800' },
+          { start: 15, end: 23, title: '🎃 ウギブギ (Oogie Boogie Bash)', desc: '特別ハロウィーンイベント。チケット保持者は15時から入場可能、本イベントは18:00〜23:00！', color: 'bg-orange-100 border-orange-300 text-orange-800 font-bold' }
+        ]
+      },
+      {
+        date: '9/23',
+        dayOfWeek: '水',
+        isWeekend: false,
+        tag: 'ユニバーサル',
+        tagColor: 'bg-cyan-100 text-cyan-800',
+        events: [
+          { start: 10, end: 18, title: '🎬 ユニバーサル・スタジオ', desc: 'ハリウッドの映画世界を再び全力で遊び尽くす2日目！', color: 'bg-sky-100 border-sky-300 text-sky-800 font-bold' },
+          { start: 18, end: 24, title: '🛍️ シティウォーク or ダウンタウンディズニー', desc: '夜のエンタメスポットでアメリカンなディナーとお土産探し', color: 'bg-pink-100 border-pink-300 text-pink-800' }
+        ]
+      },
+      {
+        date: '9/24',
+        dayOfWeek: '木',
+        isWeekend: false,
+        tag: 'DCA / ウギブギ',
+        tagColor: 'bg-orange-100 text-orange-800',
+        events: [
+          { start: 8, end: 15, title: '🎡 DCA (ディズニー・カリフォルニア・アドベンチャー)', desc: 'やり残したアトラクションや、お気に入りのグリをリピート！', color: 'bg-purple-100 border-purple-300 text-purple-800' },
+          { start: 15, end: 23, title: '🎃 ウギブギ (Oogie Boogie Bash)', desc: '大人気のハロウィーンイベント2夜目。仮装や限定キャラグリ、限定お菓子ルートを堪能。', color: 'bg-orange-100 border-orange-300 text-orange-800 font-bold' }
+        ]
+      },
+      {
+        date: '9/25',
+        dayOfWeek: '金',
+        isWeekend: false,
+        tag: 'ディズニー',
+        tagColor: 'bg-purple-100 text-purple-800',
+        events: [
+          { start: 8, end: 24, title: '🏰 ディズニーランド', desc: 'カリフォルニア最終日！大好きなディズニーランドで朝から深夜まで遊び尽くす！', color: 'bg-indigo-100 border-indigo-300 text-indigo-800 font-bold' }
+        ]
+      },
+      {
+        date: '9/26',
+        dayOfWeek: '土',
+        isWeekend: true,
+        tag: '出国・帰国',
+        tagColor: 'bg-rose-100 text-rose-800',
+        events: [
+          { start: 8, end: 11, title: '🚗 空港移動', desc: 'ホテルをチェックアウトし、お土産をパッキングしてLAXへ移動。', color: 'bg-amber-100 border-amber-300 text-amber-800' },
+          { start: 11, end: 14, title: '✈️ 11:00 出国', desc: 'LAX空港にて出国審査を終え、11:00頃のフライトで日本へ帰国。バイバイ、カリフォルニア！', color: 'bg-slate-100 border-slate-300 text-slate-600 font-bold' }
+        ]
+      }
+    ];
+
+    // ビューの切り替え (タイムライン ⇔ 詳細リスト)
+    function switchView(view) {
+      const btnTimeline = document.getElementById('btn-timeline');
+      const btnList = document.getElementById('btn-list');
+      const viewTimeline = document.getElementById('view-timeline');
+      const viewList = document.getElementById('view-list');
+
+      if (view === 'timeline') {
+        btnTimeline.className = 'px-3 py-1.5 rounded text-xs font-semibold bg-white text-slate-800 shadow-sm transition';
+        btnList.className = 'px-3 py-1.5 rounded text-xs font-semibold text-white hover:bg-white/10 transition';
+        viewTimeline.classList.remove('hidden');
+        viewList.classList.add('hidden');
+      } else {
+        btnTimeline.className = 'px-3 py-1.5 rounded text-xs font-semibold text-white hover:bg-white/10 transition';
+        btnList.className = 'px-3 py-1.5 rounded text-xs font-semibold bg-white text-slate-800 shadow-sm transition';
+        viewTimeline.classList.add('hidden');
+        viewList.classList.remove('hidden');
+      }
+    }
+
+    // タイムライン描画処理
+    function renderTimeline() {
+      const container = document.getElementById('timeline-rows');
+      container.innerHTML = '';
+
+      scheduleData.forEach(day => {
+        // 各日の行コンテナ
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-[110px_repeat(16,1fr)] py-3.5 items-center relative min-h-[72px] transition hover:bg-slate-50/50';
+
+        // 日付・曜日列
+        const dateCol = document.createElement('div');
+        const dayClass = day.isWeekend ? 'text-red-500 font-bold' : 'text-slate-600';
+        dateCol.className = 'text-left pl-2 select-none z-10';
+        dateCol.innerHTML = `
+          <div class="text-sm font-black text-slate-800 flex items-center gap-1">
+            ${day.date} <span class="${dayClass}">(${day.dayOfWeek})</span>
+          </div>
+          <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${day.tagColor}">
+            ${day.tag}
+          </span>
+        `;
+        row.appendChild(dateCol);
+
+        // 背景のダッシュライン (グリッド線)
+        const bgGrid = document.createElement('div');
+        bgGrid.className = 'absolute inset-y-0 left-[110px] right-0 grid grid-cols-16 pointer-events-none select-none';
+        for (let i = 0; i < 16; i++) {
+          const gridLine = document.createElement('div');
+          gridLine.className = 'border-r border-dashed border-slate-100 h-full';
+          bgGrid.appendChild(gridLine);
+        }
+        row.appendChild(bgGrid);
+
+        // 各イベントの配置
+        day.events.forEach(event => {
+          // グリッドスパンの計算
+          // 8:00がカラム2、24:00がカラム18
+          const startCol = event.start - 8 + 2;
+          const endCol = event.end - 8 + 2;
+
+          const eventBlock = document.createElement('div');
+          eventBlock.className = `mx-1 p-1.5 rounded-lg border text-xs shadow-sm flex flex-col justify-center cursor-pointer transition transform hover:scale-[1.01] hover:shadow-md z-10 overflow-hidden ${event.color}`;
+          eventBlock.style.gridColumn = `${startCol} / ${endCol}`;
+          eventBlock.title = `${event.title}\n時間: ${event.start}:00 〜 ${event.end}:00\n詳細: ${event.desc}`;
+          
+          eventBlock.innerHTML = `
+            <div class="font-extrabold truncate">${event.title}</div>
+            <div class="text-[9px] opacity-75 truncate">${event.start}:00 - ${event.end}:00</div>
+          `;
+          row.appendChild(eventBlock);
+        });
+
+        container.appendChild(row);
+      });
+    }
+
+    // リスト描画処理 (スマホ閲覧用)
+    function renderList() {
+      const container = document.getElementById('list-rows');
+      container.innerHTML = '';
+
+      scheduleData.forEach(day => {
+        const dayClass = day.isWeekend ? 'text-red-500' : 'text-slate-500';
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl p-4 shadow-sm border border-slate-200';
+
+        let eventsHTML = '';
+        day.events.forEach(event => {
+          eventsHTML += `
+            <div class="flex gap-3 pl-2 border-l-2 border-indigo-500 py-1.5">
+              <div class="text-xs font-bold text-slate-500 min-w-[70px] pt-0.5">
+                ${event.start}:00 - ${event.end}:00
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-slate-800">${event.title}</h4>
+                <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">${event.desc}</p>
+              </div>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center border-b pb-2 mb-3">
+            <h3 class="text-base font-black text-slate-800 flex items-center gap-1.5">
+              ${day.date} <span class="${dayClass}">(${day.dayOfWeek})</span>
+            </h3>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${day.tagColor}">
+              ${day.tag}
+            </span>
+          </div>
+          <div class="space-y-3">
+            ${eventsHTML}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // ページの初期化
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTimeline();
+      renderList();
+      // Lucideアイコンの読み込み
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
+
+```
+
